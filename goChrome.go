@@ -7,6 +7,7 @@ import (
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"log"
+	"os"
 )
 
 var goChromeCtxMap = make(map[string]context.Context, 0)
@@ -34,6 +35,7 @@ func Create(url string, opt ...GoChromeOptions) *GoChrome {
 		case *inspector.EventDetached:
 			// 界面关闭
 			newWindow.ContextCancelFunc()
+			os.Exit(0)
 		case *runtime.EventBindingCalled:
 			// 处理函数
 			json, _ := ev.MarshalJSON()
@@ -49,6 +51,7 @@ func (gc *GoChrome) Run() {
 		log.Fatal(err)
 		return
 	}
+	select {}
 }
 
 func (gc *GoChrome) start() chromedp.Tasks {
