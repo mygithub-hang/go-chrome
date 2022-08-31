@@ -24,6 +24,8 @@ type GoChrome struct {
 	bindFunc          map[string]interface{}
 	Action            chromedp.Tasks
 	finalAction       chromedp.Tasks
+	afterFunc         func()
+	closeChan         chan int
 }
 
 func Create(url string, opt ...GoChromeOptions) *GoChrome {
@@ -39,13 +41,13 @@ func Create(url string, opt ...GoChromeOptions) *GoChrome {
 		bindFunc:          map[string]interface{}{},
 		Action:            chromedp.Tasks{},
 		finalAction:       chromedp.Tasks{chromedp.Navigate(url)},
+		closeChan:         make(chan int, 1),
 	}
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		switch ev := ev.(type) {
 		case *inspector.EventDetached:
 			// 界面关闭
-			newWindow.ContextCancelFunc()
-			os.Exit(0)
+			newWindow.Close()
 		case *runtime.EventBindingCalled:
 			// 处理函数
 			jsonByte, err := ev.MarshalJSON()
@@ -62,7 +64,29 @@ func (gc *GoChrome) Run() {
 		log.Fatal(err)
 		return
 	}
-	select {}
+	defer gc.Close()
+	for {
+		select {
+		case <-gc.closeChan:
+			gc.ContextCancelFunc()
+			os.Exit(0)
+		}
+	}
+}
+
+func (gc *GoChrome) RunTask(myTask chromedp.Tasks) {
+	if err := chromedp.Run(gc.ContextContext, myTask); err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer gc.Close()
+	for {
+		select {
+		case <-gc.closeChan:
+			gc.ContextCancelFunc()
+			os.Exit(0)
+		}
+	}
 }
 
 func (gc *GoChrome) start() chromedp.Tasks {
@@ -74,6 +98,7 @@ func (gc *GoChrome) start() chromedp.Tasks {
 	gc.finalAction = append(gc.finalAction, gc.Action...)
 	gc.finalAction = append(gc.finalAction, chromedp.ActionFunc(func(ctx context.Context) error {
 		gc.ContextContext = ctx
+		go gc.afterFunc()
 		return nil
 	}))
 	return gc.finalAction
@@ -84,7 +109,7 @@ func (gc *GoChrome) SetAction(actionArr ActionTask) {
 }
 
 func (gc *GoChrome) Close() {
-	gc.ContextCancelFunc()
+	gc.closeChan <- 1
 }
 
 func (gc *GoChrome) ListenTarget(fn func(ev interface{})) {
@@ -108,7 +133,11 @@ func (gc *GoChrome) Bind(jsFuncName string, f interface{}) error {
 	return nil
 }
 
-func (gc *GoChrome) JsFunc(funcName string, args ...string) map[string]interface{} {
+func (gc *GoChrome) OpenAfter(f func()) {
+	gc.afterFunc = f
+}
+
+func (gc *GoChrome) JsFunc(funcName string, args ...string) reflect.Value {
 	param := ""
 	for _, v := range args {
 		if param == "" {
@@ -123,16 +152,13 @@ func (gc *GoChrome) JsFunc(funcName string, args ...string) map[string]interface
 	eval.ReturnByValue = true
 	do, _, _ := eval.Do(gc.ContextContext)
 	jsonStr, _ := do.MarshalJSON()
-	jsonMap := make(map[string]interface{}, 0)
-	err := json.Unmarshal(jsonStr, &jsonMap)
+	jsonData := goToJs{}
+	err := json.Unmarshal(jsonStr, &jsonData)
 	if err != nil {
 		fmt.Println("Umarshal failed:", err)
-		gc.Close()
+		return reflect.Value{}
 	}
-	return jsonMap
-	// {"type":"string","value":"ass"}
-	// {"type":"object","value":["ass","ddd",122]}
-	// {"type":"object","value":{"aa":"ass","dd":"ddd","cc":122}}
+	return reflect.ValueOf(jsonData.Value)
 }
 
 func (gc *GoChrome) bindJsFunc() {
@@ -172,23 +198,25 @@ func (gc *GoChrome) bindJsFunc() {
 }
 
 func (gc *GoChrome) runBindFunc(jsonStr []byte) {
-	//{"name":"gogogogo","payload":"{\"name\":\"gogogogo\",\"seq\":1,\"args\":[\"aa\",\"aas\"]}","executionContextId":1}
-	jsonMap := make(map[string]string, 0)
-	_ = json.Unmarshal(jsonStr, &jsonMap)
-	//if err != nil {
-	//	fmt.Println("Umarshal failed1:", err)
-	//	gc.Close()
-	//}
-	paramMap := make(map[string][]interface{})
-	_ = json.Unmarshal([]byte(jsonMap["payload"]), &paramMap)
-	//if err != nil {
-	//	fmt.Println("Umarshal failed2:", err)
-	//	gc.Close()
-	//}
-	fv := reflect.ValueOf(gc.bindFunc[jsonMap["name"]])
+	jsonData := jsToGoData{}
+	err := json.Unmarshal(jsonStr, &jsonData)
+	if err != nil {
+		fmt.Println("Umarshal failed:", err)
+		//gc.Close()
+		return
+	}
+	payload := jsToGoPayload{}
+	err = json.Unmarshal([]byte(jsonData.Payload), &payload)
+	if err != nil {
+		fmt.Println("Umarshal failed payload:", err)
+		//gc.Close()
+		return
+	}
+	fv := reflect.ValueOf(gc.bindFunc[jsonData.Name])
 	realParams := make([]reflect.Value, 0) //参数
-	for _, item := range paramMap["args"] {
+	for _, item := range payload.Args {
 		realParams = append(realParams, reflect.ValueOf(item))
 	}
-	_ = fv.Call(realParams)
+	res := fv.Call(realParams)
+	fmt.Println(res)
 }

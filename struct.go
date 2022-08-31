@@ -14,3 +14,20 @@ type GoChromeOptions struct {
 }
 
 type ActionTask chromedp.Tasks
+
+type jsToGoData struct {
+	Name               string `json:"name"`
+	Payload            string `json:"payload"`
+	ExecutionContextId int    `json:"executionContextId"`
+}
+
+type jsToGoPayload struct {
+	Name string        `json:"name"`
+	Seq  int           `json:"seq"`
+	Args []interface{} `json:"args"`
+}
+
+type goToJs struct {
+	Type  string      `json:"type"`
+	Value interface{} `json:"value"`
+}
