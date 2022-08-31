@@ -127,7 +127,7 @@ func (gc *GoChrome) Bind(jsFuncName string, f interface{}) error {
 		return errors.New("only functions can be bound")
 	}
 	if n := v.Type().NumOut(); n > 2 {
-		return errors.New("function may only return a value or a value+error")
+		return errors.New("function may only return a value or a value error")
 	}
 	gc.bindFunc[jsFuncName] = f
 	return nil
@@ -202,14 +202,12 @@ func (gc *GoChrome) runBindFunc(jsonStr []byte) {
 	err := json.Unmarshal(jsonStr, &jsonData)
 	if err != nil {
 		fmt.Println("Umarshal failed:", err)
-		//gc.Close()
 		return
 	}
 	payload := jsToGoPayload{}
 	err = json.Unmarshal([]byte(jsonData.Payload), &payload)
 	if err != nil {
 		fmt.Println("Umarshal failed payload:", err)
-		//gc.Close()
 		return
 	}
 	fv := reflect.ValueOf(gc.bindFunc[jsonData.Name])
@@ -217,6 +215,57 @@ func (gc *GoChrome) runBindFunc(jsonStr []byte) {
 	for _, item := range payload.Args {
 		realParams = append(realParams, reflect.ValueOf(item))
 	}
+	errorType := reflect.TypeOf((*error)(nil)).Elem()
 	res := fv.Call(realParams)
-	fmt.Println(res)
+	var jsRes string
+	var jsErr error
+	switch len(res) {
+	case 0:
+	case 1:
+		// One result may be a value, or an error
+		if res[0].Type().Implements(errorType) {
+			if res[0].Interface() != nil {
+				jsErr = res[0].Interface().(error)
+			}
+		}
+		if _, ok := res[0].Interface().(string); ok {
+			jsRes = res[0].String()
+		} else if _, ok := res[0].Interface().(float64); ok {
+			jsRes = fmt.Sprintf("%.f", res[0].Float())
+		} else if _, ok := res[0].Interface().([]byte); ok {
+			jsRes = string(res[0].Bytes())
+		} else {
+			jsResByte, errJs := json.Marshal(res[0].Interface())
+			jsErr = errJs
+			jsRes = string(jsResByte)
+		}
+	default:
+		resArr := []interface{}{}
+		for _, v := range res {
+			resArr = append(resArr, v.Interface())
+		}
+		jsResByte, errJs := json.Marshal(resArr)
+		jsErr = errJs
+		jsRes = string(jsResByte)
+	}
+	go func() {
+		jsString := func(v string) string { b, _ := json.Marshal(v); return string(b) }
+		retErr := ""
+		if jsErr != nil {
+			retErr = jsErr.Error()
+		}
+		expr := fmt.Sprintf(`
+							if (%[4]s) {
+								window['%[1]s']['errors'].get(%[2]d)(%[4]s);
+							} else {
+								window['%[1]s']['callbacks'].get(%[2]d)(%[3]s);
+							}
+							window['%[1]s']['callbacks'].delete(%[2]d);
+							window['%[1]s']['errors'].delete(%[2]d);
+							`, payload.Name, payload.Seq, jsString(jsRes), jsString(retErr))
+		eval := runtime.Evaluate(expr)
+		eval.AwaitPromise = true
+		eval.ReturnByValue = true
+		_, _, err = eval.Do(gc.ContextContext)
+	}()
 }
