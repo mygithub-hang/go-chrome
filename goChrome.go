@@ -62,13 +62,13 @@ func (gc *GoChrome) Run() {
 		log.Fatal(err)
 		return
 	}
-	gc.bindJsFunc()
 	select {}
 }
 
 func (gc *GoChrome) start() chromedp.Tasks {
 	gc.finalAction = append(gc.finalAction, chromedp.ActionFunc(func(ctx context.Context) error {
 		gc.ContextContext = ctx
+		gc.bindJsFunc()
 		return nil
 	}))
 	gc.finalAction = append(gc.finalAction, gc.Action...)
@@ -80,12 +80,7 @@ func (gc *GoChrome) start() chromedp.Tasks {
 }
 
 func (gc *GoChrome) SetAction(actionArr ActionTask) {
-	for _, v := range actionArr {
-		_, ok := v.(chromedp.NavigateAction)
-		if !ok {
-			gc.Action = append(gc.Action, v)
-		}
-	}
+	gc.Action = chromedp.Tasks(actionArr)
 }
 
 func (gc *GoChrome) Close() {
