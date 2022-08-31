@@ -22,6 +22,8 @@ type GoChrome struct {
 	ContextContext    context.Context
 	ContextCancelFunc context.CancelFunc
 	bindFunc          map[string]interface{}
+	Action            chromedp.Tasks
+	finalAction       chromedp.Tasks
 }
 
 func Create(url string, opt ...GoChromeOptions) *GoChrome {
@@ -35,6 +37,8 @@ func Create(url string, opt ...GoChromeOptions) *GoChrome {
 		ContextContext:    ctx,
 		ContextCancelFunc: cancel,
 		bindFunc:          map[string]interface{}{},
+		Action:            chromedp.Tasks{},
+		finalAction:       chromedp.Tasks{chromedp.Navigate(url)},
 	}
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		switch ev := ev.(type) {
@@ -63,12 +67,24 @@ func (gc *GoChrome) Run() {
 }
 
 func (gc *GoChrome) start() chromedp.Tasks {
-	return chromedp.Tasks{
-		chromedp.Navigate(gc.Url),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			gc.ContextContext = ctx
-			return nil
-		}),
+	gc.finalAction = append(gc.finalAction, chromedp.ActionFunc(func(ctx context.Context) error {
+		gc.ContextContext = ctx
+		return nil
+	}))
+	gc.finalAction = append(gc.finalAction, gc.Action...)
+	gc.finalAction = append(gc.finalAction, chromedp.ActionFunc(func(ctx context.Context) error {
+		gc.ContextContext = ctx
+		return nil
+	}))
+	return gc.finalAction
+}
+
+func (gc *GoChrome) SetAction(actionArr ActionTask) {
+	for _, v := range actionArr {
+		_, ok := v.(chromedp.NavigateAction)
+		if !ok {
+			gc.Action = append(gc.Action, v)
+		}
 	}
 }
 

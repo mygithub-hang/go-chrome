@@ -1,5 +1,7 @@
 package go_chrome
 
+import "github.com/chromedp/chromedp"
+
 // GoChromeOptions 启动配置
 type GoChromeOptions struct {
 	CliModule            bool   // 命令行模式
@@ -10,3 +12,5 @@ type GoChromeOptions struct {
 	WindowPositionHeight int    // 竖向位置
 	ChromeExecPath       string // 指定运行的浏览器
 }
+
+type ActionTask chromedp.Tasks
