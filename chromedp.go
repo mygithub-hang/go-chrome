@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, context.CancelFunc) {
+func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, context.CancelFunc, *GoChromeOptions) {
 	ctxInit := context.WithValue(context.Background(), "windowsName", windowName)
 	runOpt := GoChromeOptions{}
 	if len(opt) > 0 {
@@ -42,5 +42,5 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 		// 设置日志方法
 		chromedp.WithLogf(log.Printf),
 	)
-	return newCtx, cancel
+	return newCtx, cancel, &runOpt
 }

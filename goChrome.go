@@ -14,8 +14,6 @@ import (
 	"reflect"
 )
 
-var goChromeCtxMap = make(map[string]context.Context, 0)
-
 type GoChrome struct {
 	windowName        string
 	Url               string
@@ -32,7 +30,16 @@ func Create(url string, opt ...GoChromeOptions) *GoChrome {
 	if url == "" {
 		url = "data:text/html,<html></html>"
 	}
-	ctx, cancel := getCtX("index", url, opt...)
+	ctx, cancel, runOpt := getCtX("index", url, opt...)
+	if runOpt.UseHttpServer {
+		goHttp := getHttp(runOpt)
+		err := goHttp.StartHttpServer()
+		if err != nil {
+			fmt.Println(err)
+			cancel()
+			os.Exit(0)
+		}
+	}
 	newWindow := &GoChrome{
 		windowName:        "index",
 		Url:               url,
