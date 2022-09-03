@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"github.com/chromedp/chromedp"
 	"log"
+	"strings"
 )
 
-func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, context.CancelFunc, *GoChromeOptions) {
+func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, context.CancelFunc, *GoChromeOptions, string) {
 	ctxInit := context.WithValue(context.Background(), "windowsName", windowName)
 	runOpt := GoChromeOptions{}
 	if len(opt) > 0 {
 		runOpt = opt[0]
 		ChromeRunCommand["headless"] = runOpt.CliModule
-		if runOpt.AppModule {
+		url = GetUrl(url, runOpt.UseHttpServer)
+		if runOpt.AppModule || strings.HasPrefix(url, "data:text/html") {
 			ChromeRunCommand["app"] = url
 		}
 		if runOpt.WindowWidth > 0 && runOpt.WindowHeight > 0 {
@@ -22,6 +24,8 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 		if runOpt.WindowPositionWidth > 0 && runOpt.WindowPositionHeight > 0 {
 			ChromeRunCommand["window-position"] = fmt.Sprintf("%d,%d", runOpt.WindowPositionWidth, runOpt.WindowPositionHeight)
 		}
+	} else {
+		url = GetUrl(url, runOpt.UseHttpServer)
 	}
 	execAllocatorOption := []chromedp.ExecAllocatorOption{}
 	if runOpt.ChromeExecPath != "" {
@@ -42,5 +46,5 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 		// 设置日志方法
 		chromedp.WithLogf(log.Printf),
 	)
-	return newCtx, cancel, &runOpt
+	return newCtx, cancel, &runOpt, url
 }

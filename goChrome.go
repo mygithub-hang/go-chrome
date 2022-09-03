@@ -24,31 +24,33 @@ type GoChrome struct {
 	finalAction       chromedp.Tasks
 	afterFunc         func()
 	closeChan         chan int
+	GoHttp            *goHttp
 }
 
 func Create(url string, opt ...GoChromeOptions) *GoChrome {
-	if url == "" {
-		url = "data:text/html,<html></html>"
-	}
-	ctx, cancel, runOpt := getCtX("index", url, opt...)
+	ctx, cancel, runOpt, runUrl := getCtX("index", url, opt...)
+	var goHttp *goHttp = nil
 	if runOpt.UseHttpServer {
-		goHttp := getHttp(runOpt)
-		err := goHttp.StartHttpServer()
-		if err != nil {
-			fmt.Println(err)
-			cancel()
-			os.Exit(0)
-		}
+		goHttp = getHttp(runOpt)
+		go func() {
+			err := goHttp.StartHttpServer()
+			if err != nil {
+				fmt.Println(err)
+				cancel()
+				os.Exit(0)
+			}
+		}()
 	}
 	newWindow := &GoChrome{
 		windowName:        "index",
-		Url:               url,
+		Url:               runUrl,
 		ContextContext:    ctx,
 		ContextCancelFunc: cancel,
 		bindFunc:          map[string]interface{}{},
 		Action:            chromedp.Tasks{},
-		finalAction:       chromedp.Tasks{chromedp.Navigate(url)},
+		finalAction:       chromedp.Tasks{chromedp.Navigate(runUrl)},
 		closeChan:         make(chan int, 1),
+		GoHttp:            goHttp,
 	}
 	chromedp.ListenTarget(ctx, func(ev interface{}) {
 		switch ev := ev.(type) {
