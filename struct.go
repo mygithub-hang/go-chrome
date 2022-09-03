@@ -14,7 +14,7 @@ type GoChromeOptions struct {
 	WindowPositionWidth  int                                                 // 横向位置
 	WindowPositionHeight int                                                 // 竖向位置
 	ChromeExecPath       string                                              // 指定运行的浏览器内核
-	BrowserRunPath       string                                              // 浏览器内核解压目录
+	BrowserRunPath       Platform                                            // 浏览器内核解压目录
 	UseHttpServer        bool                                                // 是否使用http服务
 	HttpPort             int                                                 // http服务的端口
 	HttpRoute            map[string]func(http.ResponseWriter, *http.Request) // 额外的http路由
@@ -38,4 +38,10 @@ type jsToGoPayload struct {
 type goToJs struct {
 	Type  string      `json:"type"`
 	Value interface{} `json:"value"`
+}
+
+type Platform struct {
+	Linux   string
+	Windows string
+	Darwin  string
 }
