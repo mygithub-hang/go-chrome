@@ -1,4 +1,4 @@
-####[中文](README.md) | English
+####[中文](https://github.com/mygithub-hang/go-chrome/README.md) | English
 
 1. Based on [chromedp](https://github.com/chromedp/chromedp )A simple GUI package with HTML as the interface and golang as the back end
 2. You can choose the packaged executable program with chrome kernel or the packaged executable program without chrome kernel

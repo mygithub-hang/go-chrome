@@ -1,4 +1,4 @@
-####中文 | [English](README_EN.md)
+####中文 | [English](https://github.com/mygithub-hang/go-chrome/README_EN.md)
 
 1. 基于 [chromedp](https://github.com/chromedp/chromedp) 的一个以Html为界面Golang为后端的简单GUI包
 2. 可以选择带chrome内核打包可执行程序，不带chrome内核打包可执行程序
