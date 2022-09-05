@@ -13,12 +13,11 @@ type GoChromeOptions struct {
 	WindowHeight         int                                                 // 高度
 	WindowPositionWidth  int                                                 // 横向位置
 	WindowPositionHeight int                                                 // 竖向位置
-	ChromeExecPath       string                                              // 指定运行的浏览器内核
-	BrowserRunPath       Platform                                            // 浏览器内核解压目录
 	UseHttpServer        bool                                                // 是否使用http服务
 	HttpPort             int                                                 // http服务的端口
+	chromeExecPath       string                                              // 指定运行浏览器
 	HttpRoute            map[string]func(http.ResponseWriter, *http.Request) // 额外的http路由
-	DefHttpIndexData     interface{}                                         // 默认渲染主页模板参数
+	AssetFile            http.FileSystem
 }
 
 type ActionTask chromedp.Tasks
@@ -40,8 +39,18 @@ type goToJs struct {
 	Value interface{} `json:"value"`
 }
 
+type PackageConf struct {
+	Name           string   `json:"name"`
+	ChromeExecPath string   `json:"chrome_exec_path"`
+	ChromePackPath Platform `json:"chrome_pack_path"`
+	ChromeVersion  int      `json:"chrome_version"`
+	BuildCachePath string   `json:"build_cache_path"`
+	Icons          Platform `json:"icons"`
+	RunBuildPath   string   `json:"run_build_path"`
+}
+
 type Platform struct {
-	Linux   string
-	Windows string
-	Darwin  string
+	Linux   string `json:"linux"`
+	Windows string `json:"windows"`
+	Darwin  string `json:"darwin"`
 }

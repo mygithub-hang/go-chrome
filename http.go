@@ -2,10 +2,8 @@ package go_chrome
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 )
 
@@ -19,47 +17,35 @@ func getHttp(opt *GoChromeOptions) *goHttp {
 
 func (gh *goHttp) StartHttpServer() error {
 	for k, v := range gh.opt.HttpRoute {
-		http.HandleFunc("/"+strings.TrimLeft(k, "/"), v)
+		if k != "/" {
+			http.HandleFunc("/"+strings.TrimLeft(k, "/"), v)
+		}
 	}
-	if _, ok := gh.opt.HttpRoute["/"]; !ok {
-		http.HandleFunc("/", gh.indexHandler)
+	httpFileSystem := http.FileServer(http.Dir("./resources"))
+	if gh.opt.AssetFile != nil {
+		httpFileSystem = http.FileServer(gh.opt.AssetFile)
 	}
+	http.Handle("/", httpFileSystem)
 	if gh.opt.HttpPort == 0 {
 		gh.opt.HttpPort = 9527
 	}
 	return http.ListenAndServe(":"+fmt.Sprintf("%d", gh.opt.HttpPort), nil)
 }
-func (gh *goHttp) indexHandler(w http.ResponseWriter, r *http.Request) {
-	gh.View(w, r, "index", gh.opt.DefHttpIndexData)
-}
 
-func (gh *goHttp) View(w http.ResponseWriter, r *http.Request, temp string, param interface{}, suffix ...string) {
-	suffixStr := "html"
-	if len(suffix) > 0 {
-		suffixStr = suffix[0]
-	}
-	tempPath := fmt.Sprintf("./resources/%s.%s", temp, suffixStr)
-	t, err := template.ParseFiles(tempPath)
-	if err != nil {
-		return
-	}
-	_ = t.Execute(w, param)
-}
-
-func GetUrl(urlStr string, useHttpServer bool) string {
+func (gh *goHttp) GetUrl(urlStr string, useHttpServer bool) string {
 	if strings.HasPrefix(urlStr, "http") {
 		return urlStr
 	}
-	if (urlStr == "" || urlStr == "index") && useHttpServer {
-		return "http://127.0.0.1/"
+	if useHttpServer {
+		port := gh.opt.HttpPort
+		if gh.opt.HttpPort == 0 {
+			port = 9527
+		}
+		return fmt.Sprintf("http://127.0.0.1:%d/", port)
 	}
 	emptyUrl := "data:text/html,<html></html>"
 	if !useHttpServer && urlStr == "" {
 		return emptyUrl
 	}
-	content, err := os.ReadFile("./resources/" + urlStr + ".html")
-	if err != nil {
-		return emptyUrl
-	}
-	return "data:text/html," + url.PathEscape(string(content))
+	return "data:text/html," + url.PathEscape(urlStr)
 }
