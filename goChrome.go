@@ -41,6 +41,14 @@ func Create(url string, opt ...GoChromeOptions) *GoChrome {
 			}
 		}()
 	}
+	//
+	err := ReleaseBrowser(runOpt)
+	if err != nil {
+		fmt.Println(err)
+		cancel()
+		os.Exit(0)
+		return nil
+	}
 	newWindow := &GoChrome{
 		windowName:        "index",
 		Url:               runUrl,
@@ -277,4 +285,8 @@ func (gc *GoChrome) runBindFunc(jsonStr []byte) {
 		eval.ReturnByValue = true
 		_, _, err = eval.Do(gc.ContextContext)
 	}()
+}
+
+func ReleaseBrowser(opt *GoChromeOptions) error {
+	return opt.RestoreAssets("./", "browser")
 }

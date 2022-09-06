@@ -1,11 +1,14 @@
-module github.com/mygithub-hang/go-chrome
+module github.com/voyager-hang/go-chrome
 
 go 1.17
 
-require github.com/chromedp/chromedp v0.8.5
+require (
+	github.com/akavel/rsrc v0.10.2
+	github.com/chromedp/cdproto v0.0.0-20220827030233-358ed4af73cf
+	github.com/chromedp/chromedp v0.8.5
+)
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20220827030233-358ed4af73cf // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect

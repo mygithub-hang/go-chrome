@@ -18,6 +18,7 @@ type GoChromeOptions struct {
 	chromeExecPath       string                                              // 指定运行浏览器
 	HttpRoute            map[string]func(http.ResponseWriter, *http.Request) // 额外的http路由
 	AssetFile            http.FileSystem
+	RestoreAssets        func(dir, name string) error // 解压资源方法
 }
 
 type ActionTask chromedp.Tasks
