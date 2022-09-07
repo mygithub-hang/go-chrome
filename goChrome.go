@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	osRuntime "runtime"
 )
 
 type GoChrome struct {
@@ -288,5 +289,57 @@ func (gc *GoChrome) runBindFunc(jsonStr []byte) {
 }
 
 func ReleaseBrowser(opt *GoChromeOptions) error {
-	return opt.RestoreAssets("./", "browser")
+	if opt.RestoreAssets == nil {
+		return nil
+	}
+	packConf := getPackageConfig()
+	if packConf != nil {
+		if !packConf.IntegratedBrowser || packConf.ChromeExecPath != "" {
+			return nil
+		}
+	}
+	browserPath, getPathErr := GetBrowserPath(opt)
+	if getPathErr != nil {
+		return getPathErr
+	}
+	err := createDir(browserPath)
+	if err != nil {
+		return err
+	}
+	releasePath := ""
+	sysType := osRuntime.GOOS
+	switch sysType {
+	case "darwin":
+		releasePath = browserPath + "/browser/chrome-mac.zip"
+	case "linux":
+		releasePath = browserPath + "/browser/chrome-linux.zip"
+	case "windows":
+		releasePath = browserPath + "/browser/chrome-win.zip"
+	}
+	if !IsExist(releasePath) {
+		err = opt.RestoreAssets(browserPath, "browser")
+		if err != nil {
+			return err
+		}
+	}
+	if sysType == "windows" {
+		err := createDir(releasePath)
+		if err != nil {
+			return err
+		}
+		runPah := getChromeExecPath(opt)
+		if !IsExist(runPah) {
+			return UnPackZip(releasePath, browserPath)
+		}
+	}
+	return nil
+}
+
+func GetBrowserPath(opt *GoChromeOptions) (string, error) {
+	if opt.AppName == "" {
+		fmt.Println("AppName is empty")
+		os.Exit(0)
+		return "", errors.New("AppName is empty")
+	}
+	return GetHomePath() + "/AppData/Roaming/" + opt.AppName, nil
 }

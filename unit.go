@@ -1,9 +1,23 @@
 package go_chrome
 
 import (
+	"archive/zip"
 	"encoding/json"
+	"github.com/mitchellh/go-homedir"
+	"io"
+	"log"
 	"os"
+	"path"
+	"path/filepath"
 )
+
+func createDir(filePath string) error {
+	if !IsExist(filePath) {
+		err := os.MkdirAll(filePath, os.ModePerm)
+		return err
+	}
+	return nil
+}
 
 // getWorkingDirPath 获取执行路径
 func getWorkingDirPath() string {
@@ -40,4 +54,45 @@ func getPackageConfig() *PackageConf {
 		return nil
 	}
 	return &jsonData
+}
+
+func UnPackZip(src, dest string) error {
+	reader, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	for _, file := range reader.File {
+		filePath := path.Join(dest, file.Name)
+		if file.FileInfo().IsDir() {
+			os.MkdirAll(filePath, os.ModePerm)
+		} else {
+			if err = os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+				return err
+			}
+			inFile, err := file.Open()
+			if err != nil {
+				return err
+			}
+			defer inFile.Close()
+			outFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+			if err != nil {
+				return err
+			}
+			defer outFile.Close()
+			_, err = io.Copy(outFile, inFile)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func GetHomePath() string {
+	dir, err := homedir.Dir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return dir
 }

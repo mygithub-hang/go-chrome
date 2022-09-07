@@ -11,14 +11,9 @@ import (
 func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, context.CancelFunc, *GoChromeOptions, string) {
 	ctxInit := context.WithValue(context.Background(), "windowsName", windowName)
 	runOpt := GoChromeOptions{}
-	chromeExecPath := ""
-	packConfig := getPackageConfig()
-	if packConfig != nil {
-		chromeExecPath = packConfig.ChromeExecPath
-	}
-	runOpt.chromeExecPath = chromeExecPath
 	if len(opt) > 0 {
 		runOpt = opt[0]
+		chromeExecPath := getChromeExecPath(&runOpt)
 		runOpt.chromeExecPath = chromeExecPath
 		ChromeRunCommand["headless"] = runOpt.CliModule
 		gh := getHttp(&runOpt)
@@ -35,6 +30,8 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 	} else {
 		gh := getHttp(&runOpt)
 		url = gh.GetUrl(url, runOpt.UseHttpServer)
+		chromeExecPath := getChromeExecPath(&runOpt)
+		runOpt.chromeExecPath = chromeExecPath
 	}
 	execAllocatorOption := []chromedp.ExecAllocatorOption{}
 	if runOpt.chromeExecPath != "" {
@@ -56,4 +53,20 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 		chromedp.WithLogf(log.Printf),
 	)
 	return newCtx, cancel, &runOpt, url
+}
+
+func getChromeExecPath(opt *GoChromeOptions) string {
+	chromeExecPath := ""
+	packConfig := getPackageConfig()
+	if packConfig != nil && packConfig.ChromeExecPath != "" {
+		// test
+		return packConfig.ChromeExecPath
+	}
+	if opt.RestoreAssets != nil {
+		path, err := GetBrowserPath(opt)
+		if err == nil {
+			return path + "\\chrome-win\\chrome.exe"
+		}
+	}
+	return chromeExecPath
 }

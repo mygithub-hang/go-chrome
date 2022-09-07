@@ -7,6 +7,7 @@ import (
 
 // GoChromeOptions 启动配置
 type GoChromeOptions struct {
+	AppName              string                                              // 应用名称
 	CliModule            bool                                                // 命令行模式
 	AppModule            bool                                                // 应用模式启动
 	WindowWidth          int                                                 // 宽度
@@ -41,13 +42,14 @@ type goToJs struct {
 }
 
 type PackageConf struct {
-	Name           string   `json:"name"`
-	ChromeExecPath string   `json:"chrome_exec_path"`
-	ChromePackPath Platform `json:"chrome_pack_path"`
-	ChromeVersion  int      `json:"chrome_version"`
-	BuildCachePath string   `json:"build_cache_path"`
-	Icons          Platform `json:"icons"`
-	RunBuildPath   string   `json:"run_build_path"`
+	Name              string   `json:"name"`
+	ChromeExecPath    string   `json:"chrome_exec_path"`
+	IntegratedBrowser bool     `json:"integrated_browser"`
+	ChromePackPath    Platform `json:"chrome_pack_path"`
+	ChromeVersion     Platform `json:"chrome_version"`
+	BuildCachePath    string   `json:"build_cache_path"`
+	Icons             Platform `json:"icons"`
+	RunBuildPath      string   `json:"run_build_path"`
 }
 
 type Platform struct {

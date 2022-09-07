@@ -3,7 +3,6 @@ module github.com/voyager-hang/go-chrome
 go 1.17
 
 require (
-	github.com/akavel/rsrc v0.10.2
 	github.com/chromedp/cdproto v0.0.0-20220827030233-358ed4af73cf
 	github.com/chromedp/chromedp v0.8.5
 )
@@ -15,5 +14,6 @@ require (
 	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
 )
