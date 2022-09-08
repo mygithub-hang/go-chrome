@@ -5,5 +5,5 @@
 3. Fully support [chromedp](https://github.com/chromedp/chromedp) All methods
 4. Support self starting HTTP service, render files without service, and open remote address
 5. The communication between JavaScript and golang refers to [zserge/Lorca](https://github.com/zserge/lorca )
-6. Usage [go-chrome-demo](https://github.com/mygithub-hang/go-chrome-demo) Developing
-7. Packaging program [go-chrome-build](https://github.com/mygithub-hang/go-chrome-build) Developing
+6. Usage [go-chrome-demo](https://github.com/voyager-hang/go-chrome-demo) Developing
+7. Packaging program [go-chrome-build](https://github.com/voyager-hang/go-chrome-build) Developing
