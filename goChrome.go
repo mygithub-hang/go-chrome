@@ -116,7 +116,9 @@ func (gc *GoChrome) start() chromedp.Tasks {
 	gc.finalAction = append(gc.finalAction, gc.Action...)
 	gc.finalAction = append(gc.finalAction, chromedp.ActionFunc(func(ctx context.Context) error {
 		gc.ContextContext = ctx
-		go gc.afterFunc()
+		if gc.afterFunc != nil {
+			go gc.afterFunc()
+		}
 		return nil
 	}))
 	return gc.finalAction
@@ -317,16 +319,16 @@ func ReleaseBrowser(opt *GoChromeOptions) error {
 		releasePath = browserPath + "/browser/chrome-win.zip"
 	}
 	if !IsExist(releasePath) {
+		err = createDir(releasePath)
+		if err != nil {
+			return err
+		}
 		err = opt.RestoreAssets(browserPath, "browser")
 		if err != nil {
 			return err
 		}
 	}
 	if sysType == "windows" {
-		err := createDir(releasePath)
-		if err != nil {
-			return err
-		}
 		runPah := getChromeExecPath(opt)
 		if !IsExist(runPah) {
 			return UnPackZip(releasePath, browserPath)
