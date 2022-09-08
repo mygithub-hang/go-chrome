@@ -12,6 +12,7 @@ import (
 )
 
 func createDir(filePath string) error {
+	filePath = path.Dir(filePath)
 	if !IsExist(filePath) {
 		err := os.MkdirAll(filePath, os.ModePerm)
 		return err
