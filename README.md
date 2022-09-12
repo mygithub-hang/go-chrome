@@ -7,4 +7,3 @@
 5. javaScript与Golang间通信参考了[zserge/lorca](https://github.com/zserge/lorca)
 6. 使用方法 [go-chrome-demo](https://github.com/mygithub-hang/go-chrome-demo) 
 7. 打包程序 [go-chrome-build](https://github.com/mygithub-hang/go-chrome-build) 
-
