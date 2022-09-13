@@ -34,11 +34,14 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 		runOpt.chromeExecPath = chromeExecPath
 	}
 	execAllocatorOption := []chromedp.ExecAllocatorOption{}
-	if runOpt.chromeExecPath != "" {
-		execAllocatorOption = append(execAllocatorOption, chromedp.ExecPath(runOpt.chromeExecPath))
-	}
 	for k, v := range ChromeRunCommand {
 		execAllocatorOption = append(execAllocatorOption, chromedp.Flag(k, v))
+	}
+	if runOpt.ChromeExecAllocatorOption != nil {
+		execAllocatorOption = append(execAllocatorOption, runOpt.ChromeExecAllocatorOption...)
+	}
+	if runOpt.chromeExecPath != "" {
+		execAllocatorOption = append(execAllocatorOption, chromedp.ExecPath(runOpt.chromeExecPath))
 	}
 	ctx, _ := chromedp.NewExecAllocator(
 		ctxInit,
