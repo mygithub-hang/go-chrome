@@ -7,19 +7,20 @@ import (
 
 // GoChromeOptions 启动配置
 type GoChromeOptions struct {
-	AppName              string                                              // 应用名称
-	CliModule            bool                                                // 命令行模式
-	AppModule            bool                                                // 应用模式启动
-	WindowWidth          int                                                 // 宽度
-	WindowHeight         int                                                 // 高度
-	WindowPositionWidth  int                                                 // 横向位置
-	WindowPositionHeight int                                                 // 竖向位置
-	UseHttpServer        bool                                                // 是否使用http服务
-	HttpPort             int                                                 // http服务的端口
-	chromeExecPath       string                                              // 指定运行浏览器
-	HttpRoute            map[string]func(http.ResponseWriter, *http.Request) // 额外的http路由
-	AssetFile            http.FileSystem
-	RestoreAssets        func(dir, name string) error // 解压资源方法
+	AppName                   string                                              // 应用名称
+	CliModule                 bool                                                // 命令行模式
+	AppModule                 bool                                                // 应用模式启动
+	WindowWidth               int                                                 // 宽度
+	WindowHeight              int                                                 // 高度
+	WindowPositionWidth       int                                                 // 横向位置
+	WindowPositionHeight      int                                                 // 竖向位置
+	UseHttpServer             bool                                                // 是否使用http服务
+	HttpPort                  int                                                 // http服务的端口
+	chromeExecPath            string                                              // 指定运行浏览器
+	HttpRoute                 map[string]func(http.ResponseWriter, *http.Request) // 额外的http路由
+	AssetFile                 http.FileSystem                                     // 静态资源
+	RestoreAssets             func(dir, name string) error                        // 解压资源方法
+	ChromeExecAllocatorOption []chromedp.ExecAllocatorOption                      // 启动参数
 }
 
 type ActionTask chromedp.Tasks
