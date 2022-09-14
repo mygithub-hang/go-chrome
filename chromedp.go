@@ -10,22 +10,25 @@ import (
 
 func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, context.CancelFunc, *GoChromeOptions, string) {
 	ctxInit := context.WithValue(context.Background(), "windowsName", windowName)
-	runOpt := GoChromeOptions{}
+	runOpt := GoChromeOptions{
+		ChromeRunCommand: ChromeRunCommand,
+	}
 	if len(opt) > 0 {
 		runOpt = opt[0]
+		runOpt.ChromeRunCommand = ChromeRunCommand
 		chromeExecPath := getChromeExecPath(&runOpt)
 		runOpt.chromeExecPath = chromeExecPath
-		ChromeRunCommand["headless"] = runOpt.CliModule
+		runOpt.ChromeRunCommand["headless"] = runOpt.CliModule
 		gh := getHttp(&runOpt)
 		url = gh.GetUrl(url, runOpt.UseHttpServer)
 		if runOpt.AppModule || strings.HasPrefix(url, "data:text/html") {
-			ChromeRunCommand["app"] = url
+			runOpt.ChromeRunCommand["app"] = url
 		}
 		if runOpt.WindowWidth > 0 && runOpt.WindowHeight > 0 {
-			ChromeRunCommand["window-size"] = fmt.Sprintf("%d,%d", runOpt.WindowWidth, runOpt.WindowHeight)
+			runOpt.ChromeRunCommand["window-size"] = fmt.Sprintf("%d,%d", runOpt.WindowWidth, runOpt.WindowHeight)
 		}
 		if runOpt.WindowPositionWidth > 0 && runOpt.WindowPositionHeight > 0 {
-			ChromeRunCommand["window-position"] = fmt.Sprintf("%d,%d", runOpt.WindowPositionWidth, runOpt.WindowPositionHeight)
+			runOpt.ChromeRunCommand["window-position"] = fmt.Sprintf("%d,%d", runOpt.WindowPositionWidth, runOpt.WindowPositionHeight)
 		}
 	} else {
 		gh := getHttp(&runOpt)
@@ -37,7 +40,7 @@ func getCtX(windowName, url string, opt ...GoChromeOptions) (context.Context, co
 	if runOpt.chromeExecPath != "" {
 		execAllocatorOption = append(execAllocatorOption, chromedp.ExecPath(runOpt.chromeExecPath))
 	}
-	for k, v := range ChromeRunCommand {
+	for k, v := range runOpt.ChromeRunCommand {
 		execAllocatorOption = append(execAllocatorOption, chromedp.Flag(k, v))
 	}
 	ctx, _ := chromedp.NewExecAllocator(

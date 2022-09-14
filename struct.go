@@ -18,8 +18,9 @@ type GoChromeOptions struct {
 	HttpPort             int                                                 // http服务的端口
 	chromeExecPath       string                                              // 指定运行浏览器
 	HttpRoute            map[string]func(http.ResponseWriter, *http.Request) // 额外的http路由
-	AssetFile            http.FileSystem
-	RestoreAssets        func(dir, name string) error // 解压资源方法
+	AssetFile            http.FileSystem                                     // 静态资源
+	RestoreAssets        func(dir, name string) error                        // 解压资源方法
+	ChromeRunCommand     map[string]interface{}                              // 启动参数
 }
 
 type ActionTask chromedp.Tasks
