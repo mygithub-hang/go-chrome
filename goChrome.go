@@ -92,19 +92,8 @@ func (gc *GoChrome) Run() {
 	}
 }
 
-func (gc *GoChrome) RunTask(myTask chromedp.Tasks) {
-	if err := chromedp.Run(gc.ContextContext, myTask); err != nil {
-		log.Fatal(err)
-		return
-	}
-	defer gc.Close()
-	for {
-		select {
-		case <-gc.closeChan:
-			gc.ContextCancelFunc()
-			os.Exit(0)
-		}
-	}
+func (gc *GoChrome) RunUnBackup() error {
+	return chromedp.Run(gc.ContextContext, gc.start())
 }
 
 func (gc *GoChrome) start() chromedp.Tasks {
